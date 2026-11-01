@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSV کلینر</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 40px 15px; background: #f0fdf4; color: #166534; direction: rtl; }
+    .box { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 420px; margin: auto; }
+    input[type="file"] { margin: 20px 0; width: 100%; font-size: 14px; }
+    #status { margin-top: 15px; font-size: 15px; font-weight: bold; min-height: 24px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>موبائل CSV کلینر</h2>
+    <p style="font-size: 13px; color: #555;">5 لاکھ والی CSV فائل منتخب کریں۔ یہ ٹول بغیر فون کو ہینگ کیے پہلی 3 فالتو لائنیں کاٹ کر نئی فائل خود ڈاؤنلوڈ کر دے گا:</p>
+    <input type="file" id="csvFile" accept=".csv">
+    <div id="status"></div>
+  </div>
+
+  <script>
+    document.getElementById('csvFile').onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const status = document.getElementById('status');
+      status.style.color = '#1d4ed8';
+      status.textContent = '⏳ فائل پروسیس ہو رہی ہے، ایک سیکنڈ انتظار کریں...';
+
+      // پوری 80MB فائل کے بجائے صرف شروع کے چند بائٹس پڑھنا
+      const chunk = file.slice(0, 8192);
+      const reader = new FileReader();
+
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        let pos = 0;
+        for (let i = 0; i < 3; i++) {
+          pos = text.indexOf('\n', pos) + 1;
+        }
+
+        if (pos <= 0) {
+          status.style.color = '#dc2626';
+          status.textContent = '❌ پہلی 3 لائنیں تلاش نہیں ہو سکیں!';
+          return;
+        }
+
+        // فون کی میموری استعمال کیے بغیر براہِ راست پوائنٹر سے فائل کاٹنا
+        const cleanBlob = file.slice(pos, file.size, 'text/csv');
+        const downloadUrl = URL.createObjectURL(cleanBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'collections_clean.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        status.style.color = '#15803d';
+        status.innerHTML = '✅ فائل صاف ہو گئی ہے اور ڈاؤنلوڈز میں محفوظ ہو چکی ہے!';
+      };
+
+      reader.readAsText(chunk, 'utf-8');
+    };
+  </script>
+</body>
+</html>
 
